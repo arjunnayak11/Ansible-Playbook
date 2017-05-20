@@ -1,0 +1,33 @@
+##Add CI user in all environment.
+
+---
+  - hosts: dev-users
+    become: "{{ action }}"
+  - name: Adding user
+    user: 
+      name: "{{ users | default('automation')}}"
+      shell: /bin/bash 
+      comment: "automation user"
+      password: '$6$rounds=40000$VQOltan/sG33JjZr$ihVngPzxvazvQeP206PgoSMkKBe7j.4MN0mJ67KhgEBQxRkuqMKSmt9z3sSwYNS8GgyLcq9O6.dP..1awpgfr.'
+    when: ansible_os_family == "Debian"  
+ 
+  - name: Placing control macine pub  Key
+    authorized_key: 
+       user: "{{ users | default('automation')}}"
+       key: "{{ lookup('file', '../files/automation_user_name.pub') }}"
+    when: ansible_os_family == "Debian"
+  
+  - name: Placing own pub keys
+    authorized_key: 
+       user: "{{ users | default('automation')}}"
+       key: "{{ lookup('file', '../files/{{users}}.pub') }}"
+    when: ansible_os_family == "Debian"
+  
+  - name: Add users in sudoers
+    copy: 
+      src: ../files/{{ users|default('automation')}}  
+      dest: /etc/sudoers.d/ 
+      owner: root 
+      group: root 
+      mode: 0644 
+    when: ansible_os_family == "Debian"
